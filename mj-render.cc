@@ -79,6 +79,7 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
 static void print_help()
 {
     fprintf(stderr,
+    "Mandelbrot and Julia set renderer\n"
     "Usage:\n"
     "  mj-render [OPTIONS...]\n"
     "OPTIONS:\n"
