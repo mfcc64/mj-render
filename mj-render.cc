@@ -159,30 +159,18 @@ int main(int argc, char **argv)
         last_time = mj_gettimeofday();
 
         switch (computation_bits) {
-            case 64: {
-                double cx = mj_parseval<double>(cx_str, -10000.0, 10000.0);
-                double cy = mj_parseval<double>(cy_str, -10000.0, 10000.0);
-                if (is_julia) {
-                    cx = cx + jx;
-                    cy = cy + jy;
-                }
-                mj_render(csurface, color, cx, cy, width_view / width, antialias_threshold,
-                          color_period, max_iter, is_julia);
-                break;
-            }
-            case 80: {
-                long double cx = mj_parseval<long double>(cx_str, -10000.0, 10000.0);
-                long double cy = mj_parseval<long double>(cy_str, -10000.0, 10000.0);
-                if (is_julia) {
-                    cx = cx + jx;
-                    cy = cy + jy;
-                }
-                mj_render(csurface, color, cx, cy, width_view / width, antialias_threshold,
-                          color_period, max_iter, is_julia);
-                break;
-            }
-            default:
-                throw "unreached";
+        case 64:
+            mj_render(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
+                      mj_parseval<double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                      antialias_threshold, color_period, max_iter, is_julia);
+            break;
+        case 80:
+            mj_render(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
+                      mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                      antialias_threshold, color_period, max_iter, is_julia);
+            break;
+        default:
+            throw "unreached";
         }
 
         current_time = mj_gettimeofday();
