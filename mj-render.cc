@@ -76,6 +76,27 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
     }
 }
 
+static void print_help()
+{
+    fprintf(stderr,
+    "Usage:\n"
+    "  mj-render [OPTIONS...]\n"
+    "OPTIONS:\n"
+    "  -o output.png\n"
+    "  -w width\n"
+    "  -h height\n"
+    "  -i iteration\n"
+    "  -v width view\n"
+    "  -x center x\n"
+    "  -y center y\n"
+    "  -p color period\n"
+    "  -t antialias threshold\n"
+    "  -r radius of julia set (also switch to render julia set)\n"
+    "  -a angle of julia set (also switch to render julia set)\n"
+    "  -q computation bits (64, 80)\n"
+    "  -b png bits (8, 16)\n");
+}
+
 int main(int argc, char **argv)
 {
     try {
@@ -196,6 +217,7 @@ int main(int argc, char **argv)
         fprintf(stderr, " complete in %8.3f seconds.\n", current_time - last_time);
         return EXIT_SUCCESS;
     } catch (const char *msg) {
+        print_help();
         fprintf(stderr, "Error: %s\n", msg);
         return EXIT_FAILURE;
     }
