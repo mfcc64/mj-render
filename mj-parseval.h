@@ -65,7 +65,7 @@ T mj_parseval(const char *str, const T* list, int n_list)
 }
 
 template<typename T>
-T mj_printval(FILE *fp, T v)
+void mj_printval(FILE *fp, T v)
 {
     const char *fmt = NULL;
 
