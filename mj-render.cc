@@ -18,7 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <sys/time.h>
+#include <SDL2/SDL.h>
 #include "mj-calc.h"
 #include "mj-adaptive-render.h"
 #include "mj-antialias.h"
@@ -76,6 +78,165 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
     }
 }
 
+template<typename T>
+static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette const& color, T cx, T cy, double pixel_width,
+                       double antialias_threshold, double color_period, int max_iter, int is_julia)
+{
+    if (SDL_Init(SDL_INIT_VIDEO) == (-1))
+        throw SDL_GetError();
+
+    SDL_Window *window = SDL_CreateWindow("mj-render-preview", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                          csurface.width(), csurface.height(), 0);
+    if (!window)
+        throw SDL_GetError();
+
+    SDL_Surface *surface = SDL_GetWindowSurface(window);
+    double old_pixel_width = is_julia ? pixel_width * pixel_width * csurface.width() / 4.0 : pixel_width;
+
+    for ( ; ; ) {
+        SDL_FillRect(surface, 0, 0);
+        SDL_UpdateWindowSurface(window);
+        fprintf(stderr, "===============================================\n");
+        mj_render(csurface, color, cx, cy, pixel_width, antialias_threshold,
+                  color_period, max_iter, is_julia);
+        fprintf(stderr, "type = %s\n", is_julia ? "julia" : "mandelbrot");
+        fprintf(stderr, "x    = "); mj_printval(stderr, cx); fprintf(stderr, "\n");
+        fprintf(stderr, "y    = "); mj_printval(stderr, cy); fprintf(stderr, "\n");
+        fprintf(stderr, "w    = %d\n", csurface.width());
+        fprintf(stderr, "h    = %d\n", csurface.height());
+        fprintf(stderr, "v    = %.13e\n", pixel_width * csurface.width());
+        fprintf(stderr, "t    = %.6f\n", antialias_threshold);
+        fprintf(stderr, "p    = %.6f\n", color_period);
+        fprintf(stderr, "i    = %d\n", max_iter);
+        fprintf(stderr, "===============================================\n");
+
+        uint32_t *line = (uint32_t *) surface->pixels;
+        int line_width = surface->pitch / sizeof(*line);
+        for (int y = 0; y < csurface.height(); y++, line += line_width)
+            for (int x  = 0; x < csurface.width(); x++)
+                line[x] = SDL_MapRGB(surface->format, lrintf(csurface(x,y).v[0] * 255.0f),
+                                     lrintf(csurface(x,y).v[1] * 255.0f), lrintf(csurface(x,y).v[2] * 255.0f));
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+            ;
+        for (int event_processed = 0 ; !event_processed; ) {
+            SDL_Delay(50);
+            SDL_UpdateWindowSurface(window);
+            while (!event_processed && SDL_PollEvent(&event)) {
+                double mul = 0.0;
+                if (event.type == SDL_QUIT) {
+                    SDL_Quit();
+                    return;
+                }
+                if (event.type != SDL_KEYUP)
+                    continue;
+
+                switch (event.key.keysym.sym) {
+                case SDLK_1:
+                    mul = 16.0;
+                    break;
+                case SDLK_2:
+                    mul = 4.0;
+                    break;
+                case SDLK_3:
+                    mul = 2.0;
+                    break;
+                case SDLK_4:
+                    mul = sqrt(2.0);
+                    break;
+                case SDLK_5:
+                    mul = 1.0;
+                    break;
+                case SDLK_6:
+                    mul = 1.0/sqrt(sqrt(2.0));
+                    break;
+                case SDLK_7:
+                    mul = 1.0/sqrt(2.0);
+                    break;
+                case SDLK_8:
+                    mul = 1.0/2.0;
+                    break;
+                case SDLK_9:
+                    mul = 1.0/4.0;
+                    break;
+                case SDLK_0:
+                    mul = 1.0/16.0;
+                    break;
+                case SDLK_a:
+                    mul = -1.0;
+                    break;
+                case SDLK_s:
+                    mul = -2.0;
+                    break;
+                case SDLK_d:
+                    mul = -3.0;
+                    break;
+                case SDLK_f:
+                    mul = -4.0;
+                    break;
+                case SDLK_g:
+                    mul = -5.0;
+                    break;
+                case SDLK_h:
+                    mul = -6.0;
+                    break;
+                case SDLK_j:
+                    mul = -7.0;
+                    break;
+                case SDLK_ESCAPE:
+                    SDL_Quit();
+                    return;
+                }
+
+                if (mul != 0.0)
+                    event_processed = 1;
+
+                if (mul > 0.0) {
+                    if (!is_julia && mul <= 1.0) {
+                        int mx, my;
+                        SDL_GetMouseState(&mx, &my);
+                        mx = mx - csurface.width()/2;
+                        my = csurface.height()/2 - my;
+                        cx = cx + T(mx * pixel_width);
+                        cy = cy + T(my * pixel_width);
+                    }
+                    pixel_width *= mul;
+                }
+
+                if (mul == -1.0)
+                    max_iter = (max_iter > 8*1024*1024) ? 16*1024*1024 : 2*max_iter;
+
+                if (mul == -2.0)
+                    max_iter = (max_iter < 512) ? 256 : max_iter/2;
+
+                if (mul == -3.0)
+                    color_period = (color_period > 8192.0) ? 16384.0 : 2.0*color_period;
+
+                if (mul == -4.0)
+                    color_period = (color_period < 2.0) ? 1.0 : 0.5*color_period;
+
+                if (mul == -5.0)
+                    antialias_threshold = (antialias_threshold > 4096.0) ? 8192.0 : 2.0*antialias_threshold;
+
+                if (mul == -6.0)
+                    antialias_threshold = (antialias_threshold < 0.125) ? 0.06125 : 0.5*antialias_threshold;
+
+                if (mul == -7.0) {
+                    if (!is_julia) {
+                        old_pixel_width = pixel_width;
+                        pixel_width = 4.0 * sqrt(pixel_width / csurface.width());
+                    } else {
+                        pixel_width = old_pixel_width;
+                    }
+
+                    is_julia = !is_julia;
+                }
+            }
+        }
+    }
+}
+
 static void print_help()
 {
     fprintf(stderr,
@@ -83,7 +244,7 @@ static void print_help()
     "Usage:\n"
     "  mj-render [OPTIONS...]\n"
     "OPTIONS:\n"
-    "  -o output.png\n"
+    "  -o output.png/preview\n"
     "  -w width\n"
     "  -h height\n"
     "  -i iteration\n"
@@ -176,6 +337,24 @@ int main(int argc, char **argv)
 
         MJ_ColorPalette color;
         MJ_Surface<MJ_Color> csurface(width, height);
+
+        if (!strcmp(filename, "preview")) {
+            switch (computation_bits) {
+            case 64:
+                mj_preview(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
+                           mj_parseval<double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                           antialias_threshold, color_period, max_iter, is_julia);
+                break;
+            case 80:
+                mj_preview(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
+                           mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                           antialias_threshold, color_period, max_iter, is_julia);
+                break;
+            default:
+                throw "unreached";
+            }
+            return EXIT_SUCCESS;
+        }
 
         double last_time, current_time;
         last_time = mj_gettimeofday();
