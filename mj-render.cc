@@ -352,17 +352,17 @@ int main(int argc, char **argv)
             switch (computation_bits) {
             case 64:
                 mj_preview(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
-                           mj_parseval<double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                           mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
                            antialias_threshold, color_period, max_iter, is_julia);
                 break;
             case 80:
                 mj_preview(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
-                           mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                           mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
                            antialias_threshold, color_period, max_iter, is_julia);
                 break;
             case 128:
                 mj_preview(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
-                           mj_parseval<MJ_F128>(cx_str) + MJ_F128(jy), width_view / width,
+                           mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
                            antialias_threshold, color_period, max_iter, is_julia);
                 break;
             default:
@@ -377,17 +377,17 @@ int main(int argc, char **argv)
         switch (computation_bits) {
         case 64:
             mj_render(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
-                      mj_parseval<double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                      mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
                       antialias_threshold, color_period, max_iter, is_julia);
             break;
         case 80:
             mj_render(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
-                      mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                      mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
                       antialias_threshold, color_period, max_iter, is_julia);
             break;
         case 128:
             mj_render(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
-                      mj_parseval<MJ_F128>(cx_str) + MJ_F128(jy), width_view / width,
+                      mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
                       antialias_threshold, color_period, max_iter, is_julia);
             break;
         default:
