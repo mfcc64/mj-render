@@ -285,10 +285,10 @@ int main(int argc, char **argv)
                 throw "invalid argument";
             switch (argv[k][1]) {
             case 'w':
-                width = mj_parseval<int>(argv[k+1], 16, 16384);
+                width = mj_parseval<int>(argv[k+1], 16, 8192);
                 break;
             case 'h':
-                height = mj_parseval<int>(argv[k+1], 16, 16384);
+                height = mj_parseval<int>(argv[k+1], 16, 8192);
                 break;
             case 'i':
                 max_iter = mj_parseval<int>(argv[k+1], 16, 1024*1024*16);
