@@ -254,6 +254,7 @@ static void print_help()
     "  -y center y\n"
     "  -p color period\n"
     "  -t antialias threshold\n"
+    "  -m global multisample antialias\n"
     "  -r radius of julia set (also switch to render julia set)\n"
     "  -a angle of julia set (also switch to render julia set)\n"
     "  -q computation bits (64, 80)\n"
@@ -275,6 +276,7 @@ int main(int argc, char **argv)
         int is_julia = 0;
         int computation_bits = 64;
         int png_bits = 8;
+        int multisample = 1;
         const char *filename = NULL;
 
         if ((argc - 1) % 2)
@@ -325,6 +327,9 @@ int main(int argc, char **argv)
             case 'b':
                 png_bits = mj_parseval<int>(argv[k+1], (const int[]){8, 16}, 2);
                 break;
+            case 'm':
+                multisample = mj_parseval<int>(argv[k+1], 1, 3);
+                break;
             default:
                 throw "invalid argument";
             }
@@ -335,11 +340,15 @@ int main(int argc, char **argv)
 
         double jx = radius * cos(angle);
         double jy = radius * sin(angle);
+        int is_preview = !strcmp(filename, "preview");
+
+        width = is_preview ? width : width * multisample;
+        height = is_preview ? height : height * multisample;
 
         MJ_ColorPalette color;
         MJ_Surface<MJ_Color> csurface(width, height);
 
-        if (!strcmp(filename, "preview")) {
+        if (is_preview) {
             switch (computation_bits) {
             case 64:
                 mj_preview(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
@@ -395,10 +404,10 @@ int main(int argc, char **argv)
 
         switch (png_bits) {
         case 8:
-            mj_output_png<uint8_t>(csurface, filename);
+            mj_output_png<uint8_t>(csurface, filename, multisample);
             break;
         case 16:
-            mj_output_png<uint16_t>(csurface, filename);
+            mj_output_png<uint16_t>(csurface, filename, multisample);
             break;
         default:
             throw "unreached";

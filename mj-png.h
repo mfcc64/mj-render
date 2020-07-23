@@ -25,7 +25,7 @@
 #include "mj-color.h"
 
 template<typename T>
-void mj_output_png(MJ_Surface<MJ_Color> const& surface, const char *filename)
+void mj_output_png(MJ_Surface<MJ_Color> const& surface, const char *filename, int multisample)
 {
     float multiplier = 0.0f;
     FILE *fp = NULL;
@@ -60,19 +60,26 @@ void mj_output_png(MJ_Surface<MJ_Color> const& surface, const char *filename)
 
         png_init_io(png_ptr, fp);
         png_set_filter(png_ptr, 0, PNG_ALL_FILTERS);
-        png_set_IHDR(png_ptr, info_ptr, surface.width(), surface.height(), 8 * sizeof(T),
+        png_set_IHDR(png_ptr, info_ptr, surface.width() / multisample, surface.height() / multisample, 8 * sizeof(T),
                      PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
                      PNG_FILTER_TYPE_DEFAULT);
         png_set_gAMA(png_ptr, info_ptr, 0.45455);
         png_write_info(png_ptr, info_ptr);
         png_set_swap(png_ptr);
-        line = new T[surface.width() * 3];
+        line = new T[surface.width() * 3 / multisample];
 
-        for (int y = 0; y < surface.height(); y++) {
-            for (int x = 0; x < surface.width(); x++) {
-                line[3*x+0] = lrintf(multiplier * surface(x,y).v[0]);
-                line[3*x+1] = lrintf(multiplier * surface(x,y).v[1]);
-                line[3*x+2] = lrintf(multiplier * surface(x,y).v[2]);
+        for (int y = 0; y < surface.height(); y += multisample) {
+            T *cur = line;
+            for (int x = 0; x < surface.width(); x += multisample, cur += 3) {
+                MJ_Color cbuf[16];
+                for (int idx = 0, dy = 0; dy < multisample; dy++)
+                    for (int dx = 0; dx < multisample; dx++, idx++)
+                        cbuf[idx] = surface(x + dx, y + dy);
+                MJ_Color color = mj_color_average(cbuf, 1.0f, multisample*multisample);
+
+                cur[0] = lrintf(multiplier * color.v[0]);
+                cur[1] = lrintf(multiplier * color.v[1]);
+                cur[2] = lrintf(multiplier * color.v[2]);
             }
             png_write_row(png_ptr, (png_bytep) line);
         }
