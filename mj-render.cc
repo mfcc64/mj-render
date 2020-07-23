@@ -26,6 +26,7 @@
 #include "mj-antialias.h"
 #include "mj-parseval.h"
 #include "mj-color.h"
+#include "mj-f128.h"
 #include "mj-png.h"
 
 inline double mj_gettimeofday()
@@ -319,7 +320,7 @@ int main(int argc, char **argv)
                 filename = argv[k+1];
                 break;
             case 'q':
-                computation_bits = mj_parseval<int>(argv[k+1], (const int[]){64, 80}, 2);
+                computation_bits = mj_parseval<int>(argv[k+1], (const int[]){64, 80, 128}, 3);
                 break;
             case 'b':
                 png_bits = mj_parseval<int>(argv[k+1], (const int[]){8, 16}, 2);
@@ -350,6 +351,11 @@ int main(int argc, char **argv)
                            mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
                            antialias_threshold, color_period, max_iter, is_julia);
                 break;
+            case 128:
+                mj_preview(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
+                           mj_parseval<MJ_F128>(cx_str) + MJ_F128(jy), width_view / width,
+                           antialias_threshold, color_period, max_iter, is_julia);
+                break;
             default:
                 throw "unreached";
             }
@@ -368,6 +374,11 @@ int main(int argc, char **argv)
         case 80:
             mj_render(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
                       mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jy, width_view / width,
+                      antialias_threshold, color_period, max_iter, is_julia);
+            break;
+        case 128:
+            mj_render(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
+                      mj_parseval<MJ_F128>(cx_str) + MJ_F128(jy), width_view / width,
                       antialias_threshold, color_period, max_iter, is_julia);
             break;
         default:

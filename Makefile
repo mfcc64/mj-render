@@ -1,7 +1,7 @@
 
 CXX=g++
 CXXFLAGS=-O2 -fno-math-errno
-LDFLAGS=-lpng -lSDL2
+LDFLAGS=-lpng -lSDL2 -lgmp
 PROGS=mj-render
 
 .PHONY: all clean

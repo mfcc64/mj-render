@@ -19,15 +19,22 @@
 #define MJ_CALC_H 1
 
 #include <math.h>
+#include "mj-f128.h"
 
 #define MJ_INFINITY (65536.0*65536.0*65536.0)
+
+template<typename T>
+inline T mj_sqr(T v)
+{
+    return v * v;
+}
 
 template<typename T>
 double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
 {
     for (int k = 0; k < max_iter; k++) {
-        T zx2 = zx * zx;
-        T zy2 = zy * zy;
+        T zx2 = mj_sqr(zx);
+        T zy2 = mj_sqr(zy);
         T zxy = zx * zy;
 
         zx = zx2 - zy2 + cx;
