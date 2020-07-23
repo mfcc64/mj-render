@@ -263,8 +263,8 @@ static void print_help()
 int main(int argc, char **argv)
 {
     try {
-        const char *cx_str = "0.0";
-        const char *cy_str = "0.0";
+        const char *cx_str = "0";
+        const char *cy_str = "0";
         int width = 640, height = 480;
         int max_iter = 1024;
         double width_view = 4.0;
