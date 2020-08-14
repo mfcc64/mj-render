@@ -18,8 +18,17 @@
 #ifndef MJ_COLOR_H
 #define MJ_COLOR_H 1
 
+#include <stdio.h>
+
 struct MJ_Color {
     float v[4];
+
+    inline void is_valid() const
+    {
+        for (int i = 0; i < 3; i++)
+            if (!(v[i] >= 0.0f && v[i] <= 1.0f))
+                throw "invalid color";
+    }
 };
 
 MJ_Color mj_color_average(const MJ_Color color[], float status, int count)
@@ -37,19 +46,55 @@ MJ_Color mj_color_average(const MJ_Color color[], float status, int count)
 
 class MJ_ColorPalette {
 public:
-    MJ_ColorPalette()
+    MJ_ColorPalette(const char *filename = NULL)
     {
-        m_color = m_default_color;
-        m_nb_color = m_nb_default_color;
-        m_infinity_color = (MJ_Color){};
-        m_gen_grad();
+        if (!filename) {
+            m_color = m_default_color;
+            m_nb_color = m_nb_default_color;
+            m_infinity_color = (MJ_Color){};
+            m_gen_grad();
+            return;
+        }
+
+        FILE *fp = fopen(filename, "rb");
+        if (!fp)
+            throw "cannot open palette file";
+
+        try {
+            if (fscanf(fp, "%f %f %f", &m_infinity_color.v[0], &m_infinity_color.v[1], &m_infinity_color.v[2]) != 3)
+                throw "invalid palette file";
+            m_infinity_color.is_valid();
+
+            if (fscanf(fp, "%d", &m_nb_color) != 1)
+                throw "invalid palette file";
+            if (m_nb_color < 1 || m_nb_color > 65536)
+                throw "invalid palette file";
+
+            m_color = new MJ_Color[m_nb_color];
+            for (int k = 0; k < m_nb_color; k++) {
+                if (fscanf(fp, "%f %f %f", (float *)&m_color[k].v[0], (float *)&m_color[k].v[1], (float *)&m_color[k].v[2]) != 3)
+                    throw "invalid palette file";
+                m_color[k].is_valid();
+            }
+
+            char tail;
+            if (fscanf(fp, " %c", &tail) == 1)
+                throw "invalid palette file";
+            m_gen_grad();
+        } catch (...) {
+            fclose(fp);
+            throw;
+        }
+
+        fclose(fp);
     }
 
     ~MJ_ColorPalette()
     {
-        if (m_color != m_default_color)
+        if (m_color && m_color != m_default_color)
             delete[] m_color;
-        delete[] m_grad;
+        if (m_grad)
+            delete[] m_grad;
     }
 
     MJ_Color color(double x, float status) const
