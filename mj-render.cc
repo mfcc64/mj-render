@@ -277,6 +277,7 @@ int main(int argc, char **argv)
         int computation_bits = 64;
         int png_bits = 8;
         int multisample = 1;
+        double color_offset = 0.0;
         const char *filename = NULL;
         const char *palette_filename = NULL;
 
@@ -334,6 +335,9 @@ int main(int argc, char **argv)
             case 'c':
                 palette_filename = argv[k+1];
                 break;
+            case 'C':
+                color_offset = mj_parseval<double>(argv[k+1], 0.0, 1.0);
+                break;
             default:
                 throw "invalid argument";
             }
@@ -349,7 +353,7 @@ int main(int argc, char **argv)
         width = is_preview ? width : width * multisample;
         height = is_preview ? height : height * multisample;
 
-        MJ_ColorPalette color(palette_filename);
+        MJ_ColorPalette color(palette_filename, color_offset);
         MJ_Surface<MJ_Color> csurface(width, height);
 
         if (is_preview) {

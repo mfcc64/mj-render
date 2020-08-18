@@ -46,8 +46,10 @@ MJ_Color mj_color_average(const MJ_Color color[], float status, int count)
 
 class MJ_ColorPalette {
 public:
-    MJ_ColorPalette(const char *filename = NULL)
+    MJ_ColorPalette(const char *filename = NULL, double offset = 0.0)
     {
+        m_offset = offset;
+
         if (!filename) {
             m_color = m_default_color;
             m_nb_color = m_nb_default_color;
@@ -99,6 +101,7 @@ public:
 
     MJ_Color color(double x, float status) const
     {
+        x += m_offset;
         x = x - floor(x);
         x *= m_nb_color;
         int m = floor(x);
@@ -128,6 +131,7 @@ private:
     MJ_Color m_infinity_color;
     const MJ_Color *m_color;
     MJ_Color *m_grad;
+    double   m_offset;
     int      m_nb_color;
 
     static const MJ_Color m_default_color[];
