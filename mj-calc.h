@@ -35,15 +35,11 @@ double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
     for (int k = 0; k < max_iter; k++) {
         T zx2 = mj_sqr(zx);
         T zy2 = mj_sqr(zy);
-        T zxy = zx * zy;
-
-        zx = zx2 - zy2 + cx;
-        zy = zxy + zxy + cy;
 
         if (int(zx2 + zy2) >= 7) {
             double _cx = cx, _cy = cy, _zx = zx, _zy = zy;
 
-            for ( ; ; k++) {
+            for (k-- ; k < max_iter + 1000; k++) {
                 double _zx2 = _zx * _zx;
                 double _zy2 = _zy * _zy;
                 double _zxy = _zx * _zy;
@@ -55,7 +51,13 @@ double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
                 if (fsq >= MJ_INFINITY)
                     return k - log2(log2(fsq));
             }
+
+            return MJ_INFINITY;
         }
+
+        T zxy = zx * zy;
+        zx = zx2 - zy2 + cx;
+        zy = zxy + zxy + cy;
     }
 
     return MJ_INFINITY;
