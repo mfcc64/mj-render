@@ -116,6 +116,7 @@ public:
     friend MJ_F128 operator -(const MJ_F128& a);
     friend MJ_F128 operator *(const MJ_F128& a, const MJ_F128& b);
     friend MJ_F128 mj_sqr(const MJ_F128& a);
+    friend bool operator >=(const MJ_F128& a, double b);
 
 private:
     uint64_t m_value[2];
@@ -274,6 +275,11 @@ inline MJ_F128 operator *(const MJ_F128& a, const MJ_F128& b)
 inline MJ_F128 mj_sqr(const MJ_F128& a)
 {
     return MJ_F128::s_mul_or_sqr(a, a, 1);
+}
+
+inline bool operator >=(const MJ_F128& a, double b)
+{
+    return int64_t(a.m_value[1]) >= int64_t(b * (1LL << 56));
 }
 
 template<>

@@ -36,7 +36,7 @@ double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
         T zx2 = mj_sqr(zx);
         T zy2 = mj_sqr(zy);
 
-        if (int(zx2 + zy2) >= 7) {
+        if ((zx2 + zy2) >= 4.004) {
             double _cx = cx, _cy = cy, _zx = zx, _zy = zy;
 
             for (k-- ; k < max_iter + 1000; k++) {
