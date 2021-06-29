@@ -40,8 +40,9 @@ template<typename T>
 static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette const& color, T cx, T cy, double pixel_width,
                       double antialias_threshold, double color_period, int max_iter, int is_julia)
 {
+    int is_sym = is_julia && (MJ_MANDELBROT_POWER % 2 == 0);
     MJ_Surface<double> dsurface(csurface.width() + 2,
-                                is_julia ? (csurface.height() + 1) / 2 + 2 :
+                                is_sym ? (csurface.height() + 1) / 2 + 2 :
                                 csurface.height()+ 2);
     double center_x = 0.5 * (csurface.width() - 1) + 1;
     double center_y = 0.5 * (csurface.height() - 1) + 1;
@@ -72,7 +73,7 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
             break;
     }
 
-    if (is_julia) {
+    if (is_sym) {
         for (int y0 = 0, y1 = csurface.height() - 1; y0 < y1; y0++, y1--)
             for (int x = 0; x < csurface.width(); x++)
                 csurface(x, y1) = csurface(csurface.width() - 1 - x, y0);
@@ -92,7 +93,9 @@ static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette con
         throw SDL_GetError();
 
     SDL_Surface *surface = SDL_GetWindowSurface(window);
-    double old_pixel_width = is_julia ? pixel_width * pixel_width * csurface.width() / 4.0 : pixel_width;
+    double old_pixel_width = is_julia ?
+        pow(pixel_width * 0.25 * csurface.width(), MJ_MANDELBROT_POWER) / (0.25 * csurface.width()) :
+        pixel_width;
 
     for ( ; ; ) {
         SDL_FillRect(surface, 0, 0);
@@ -226,7 +229,7 @@ static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette con
                 if (mul == -7.0) {
                     if (!is_julia) {
                         old_pixel_width = pixel_width;
-                        pixel_width = 4.0 * sqrt(pixel_width / csurface.width());
+                        pixel_width = pow(pixel_width * 0.25 * csurface.width(), 1.0 / MJ_MANDELBROT_POWER) / (0.25 * csurface.width());
                     } else {
                         pixel_width = old_pixel_width;
                     }

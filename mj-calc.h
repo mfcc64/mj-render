@@ -23,6 +23,10 @@
 
 #define MJ_INFINITY (65536.0*65536.0*65536.0)
 
+#ifndef MJ_MANDELBROT_POWER
+#define MJ_MANDELBROT_POWER 2
+#endif
+
 template<typename T>
 inline T mj_sqr(T v)
 {
@@ -30,34 +34,74 @@ inline T mj_sqr(T v)
 }
 
 template<typename T>
+inline void mj_complex_mul(T &sx, T &sy, const T &ax, const T &ay, const T &bx, const T &by)
+{
+    sx = ax * bx - ay * by;
+    sy = ax * by + bx * ay;
+}
+
+template<typename T>
+inline void mj_complex_pow2(T &sx, T &sy, const T &zx, const T &zy, T *side_fsq = NULL)
+{
+    T zx2 = mj_sqr(zx);
+    T zy2 = mj_sqr(zy);
+    sx = zx2 - zy2;
+    sy = zx * zy;
+    sy = sy + sy;
+    if (side_fsq)
+        *side_fsq = zx2 + zy2;
+}
+
+/* C-style template */
+#define MJ_DEF_COMPLEX_POW(n, m, odd)                                           \
+template<typename T>                                                            \
+inline void mj_complex_pow ## n (T &sx, T &sy, const T &zx, const T &zy,        \
+                                 T *side_fsq = NULL)                            \
+{                                                                               \
+    T tx, ty;                                                                   \
+    mj_complex_pow ## m (tx, ty, zx, zy, side_fsq);                             \
+    if (odd) mj_complex_mul(sx, sy, tx, ty, zx, zy);                            \
+    else mj_complex_pow2(sx, sy, tx, ty);                                       \
+}
+
+MJ_DEF_COMPLEX_POW(3, 2, 1)
+MJ_DEF_COMPLEX_POW(4, 2, 0)
+MJ_DEF_COMPLEX_POW(5, 4, 1)
+MJ_DEF_COMPLEX_POW(6, 3, 0)
+MJ_DEF_COMPLEX_POW(7, 6, 1)
+MJ_DEF_COMPLEX_POW(8, 4, 0)
+MJ_DEF_COMPLEX_POW(9, 8, 1)
+
+#define MJ_TEMP_JOIN(a, b) a ## b
+#define MJ_COMPLEX_POW(sx, sy, zx, zy, fsq, p) \
+    MJ_TEMP_JOIN(mj_complex_pow, p) (sx, sy, zx, zy, fsq)
+
+template<typename T>
 double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
 {
-    for (int k = 0; k < max_iter; k++) {
-        T zx2 = mj_sqr(zx);
-        T zy2 = mj_sqr(zy);
+    T fsq, sx, sy;
+    static const double fsq_max = 1.001 * pow(2.0, 2.0 / (MJ_MANDELBROT_POWER - 1));
 
-        if ((zx2 + zy2) >= 4.004) {
+    for (int k = 0; k < max_iter; k++) {
+        MJ_COMPLEX_POW(sx, sy, zx, zy, &fsq, MJ_MANDELBROT_POWER);
+
+        if (fsq >= fsq_max) {
             double _cx = cx, _cy = cy, _zx = zx, _zy = zy;
 
             for (k-- ; k < max_iter + 1000; k++) {
-                double _zx2 = _zx * _zx;
-                double _zy2 = _zy * _zy;
-                double _zxy = _zx * _zy;
-
-                _zx = _zx2 - _zy2 + _cx;
-                _zy = _zxy + _zxy + _cy;
-
-                double fsq = _zx2 + _zy2;
-                if (fsq >= MJ_INFINITY)
-                    return k - log2(log2(fsq));
+                double _fsq, _sx, _sy;
+                MJ_COMPLEX_POW(_sx, _sy, _zx, _zy, &_fsq, MJ_MANDELBROT_POWER);
+                _zx = _sx + _cx;
+                _zy = _sy + _cy;
+                if (_fsq >= MJ_INFINITY)
+                    return k - log2(log2(_fsq)) / log2(MJ_MANDELBROT_POWER);
             }
 
             return MJ_INFINITY;
         }
 
-        T zxy = zx * zy;
-        zx = zx2 - zy2 + cx;
-        zy = zxy + zxy + cy;
+        zx = sx + cx;
+        zy = sy + cy;
     }
 
     return MJ_INFINITY;
