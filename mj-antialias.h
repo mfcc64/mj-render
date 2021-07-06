@@ -25,7 +25,7 @@
 template<typename T>
 int mj_antialias(MJ_Surface<MJ_Color> const& output, MJ_Surface<double> const& input, MJ_ColorPalette const& palette,
                  T cx, T cy, double center_x, double center_y, double pixel_width, double threshold,
-                 double period, int pass, int max_iter, int is_julia)
+                 double period, int pass, int max_iter, int julia_mode)
 {
     if (!pass) {
         for (int x = 0, y = 0; x < input.width(); x++)
@@ -88,9 +88,9 @@ int mj_antialias(MJ_Surface<MJ_Color> const& output, MJ_Surface<double> const& i
 
             int is_infinity = 1;
             for (int k = 0; k < 8; k++) {
-                T zx = (x - center_x + offset_x[k] * antialias_step) * pixel_width;
-                T zy = (center_y - y - offset_y[k] * antialias_step) * pixel_width;
-                double res = mj_calc_select(cx, cy, zx, zy, max_iter, is_julia);
+                double zx = (x - center_x + offset_x[k] * antialias_step) * pixel_width;
+                double zy = (center_y - y - offset_y[k] * antialias_step) * pixel_width;
+                double res = mj_calc_select(cx, cy, zx, zy, max_iter, julia_mode);
                 if (res == MJ_INFINITY) {
                     antialias_buf[k] = palette.infinity_color(1);
                 } else {

@@ -19,7 +19,13 @@
 #define MJ_CALC_H 1
 
 #include <math.h>
+#include <complex.h>
 #include "mj-f128.h"
+
+#define MJ_JULIA_MODE_MANDELBROT 0
+#define MJ_JULIA_MODE_JULIA_AT_C 1
+#define MJ_JULIA_MODE_JULIA_AT_0 2
+#define MJ_JULIA_MODE_MANDELBROT_JULIA 3
 
 #define MJ_INFINITY (65536.0*65536.0*65536.0)
 
@@ -108,9 +114,43 @@ double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
 }
 
 template<typename T>
-double mj_calc_select(T cx, T cy, T zx, T zy, int max_iter, int is_julia)
+double mj_calc_select(T cx, T cy, double _zx, double _zy, int max_iter, int julia_mode)
 {
-    return is_julia ? mj_calc(cx, cy, zx, zy, max_iter) : mj_calc(cx + zx, cy + zy, T(0), T(0), max_iter);
+    //return is_julia ? mj_calc(cx, cy, zx, zy, max_iter) : mj_calc(cx + zx, cy + zy, T(0), T(0), max_iter);
+    static const double fsq_max = 1.001 * pow(2.0, 2.0 / (MJ_MANDELBROT_POWER - 1));
+    _Complex double tmp;
+    double _cx = cx, _cy = cy;
+    switch (julia_mode) {
+    case MJ_JULIA_MODE_MANDELBROT:
+        cx = cx + T(_zx);
+        cy = cy + T(_zy);
+        _cx += _zx;
+        _cy += _zy;
+        _zx = _zy = 0;
+        break;
+    case MJ_JULIA_MODE_JULIA_AT_0:
+        break;
+    case MJ_JULIA_MODE_MANDELBROT_JULIA:
+        tmp = cpow(_zx + I * _zy, MJ_MANDELBROT_POWER);
+        cx = cx + T(creal(tmp));
+        cy = cy + T(cimag(tmp));
+        _cx += creal(tmp);
+        _cy += cimag(tmp);
+        _zx = _zy = 0;
+        break;
+    case MJ_JULIA_MODE_JULIA_AT_C:
+        tmp = cpow(_zx + I * _zy, 1.0 / MJ_MANDELBROT_POWER);
+        _zx = creal(tmp);
+        _zy = cimag(tmp);
+        break;
+    default:
+        throw "invalid julia mode";
+    }
+
+    if (_zx * _zx + _zy * _zy >= fsq_max || _cx * _cx + _cy * _cy >= fsq_max)
+        return mj_calc(_cx, _cy, _zx, _zy, max_iter);
+    else
+        return mj_calc(cx, cy, T(_zx), T(_zy), max_iter);
 }
 
 #endif

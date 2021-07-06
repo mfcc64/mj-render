@@ -38,9 +38,10 @@ inline double mj_gettimeofday()
 
 template<typename T>
 static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette const& color, T cx, T cy, double pixel_width,
-                      double antialias_threshold, double color_period, int max_iter, int is_julia)
+                      double antialias_threshold, double color_period, int max_iter, int julia_mode)
 {
-    int is_sym = is_julia && (MJ_MANDELBROT_POWER % 2 == 0);
+    int is_sym = (julia_mode == MJ_JULIA_MODE_JULIA_AT_0 || julia_mode == MJ_JULIA_MODE_MANDELBROT_JULIA);
+    is_sym = is_sym && (MJ_MANDELBROT_POWER % 2 == 0);
     MJ_Surface<double> dsurface(csurface.width() + 2,
                                 is_sym ? (csurface.height() + 1) / 2 + 2 :
                                 csurface.height()+ 2);
@@ -52,7 +53,7 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
     fprintf(stderr, "Rendering       :");
     fflush(stderr);
 
-    mj_adaptive_render(dsurface, cx, cy, center_x, center_y, pixel_width, max_iter, is_julia);
+    mj_adaptive_render(dsurface, cx, cy, center_x, center_y, pixel_width, max_iter, julia_mode);
 
     current_time = mj_gettimeofday();
     fprintf(stderr, " complete in %8.3f seconds.\n", current_time - last_time);
@@ -63,7 +64,7 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
         fflush(stderr);
 
         int modified = mj_antialias(csurface, dsurface, color, cx, cy, center_x, center_y, pixel_width,
-                                    antialias_threshold, color_period, pass, max_iter, is_julia);
+                                    antialias_threshold, color_period, pass, max_iter, julia_mode);
 
         current_time = mj_gettimeofday();
         fprintf(stderr, " complete in %8.3f seconds.\n", current_time - last_time);
@@ -82,28 +83,42 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
 
 template<typename T>
 static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette const& color, T cx, T cy, double pixel_width,
-                       double antialias_threshold, double color_period, int max_iter, int is_julia)
+                       double antialias_threshold, double color_period, int max_iter, int julia_mode)
 {
     if (SDL_Init(SDL_INIT_VIDEO) == (-1))
         throw SDL_GetError();
 
+    int is_locked = 0;
     SDL_Window *window = SDL_CreateWindow("mj-render-preview", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                                           csurface.width(), csurface.height(), 0);
     if (!window)
         throw SDL_GetError();
 
     SDL_Surface *surface = SDL_GetWindowSurface(window);
-    double old_pixel_width = is_julia ?
-        pow(pixel_width * 0.25 * csurface.width(), MJ_MANDELBROT_POWER) / (0.25 * csurface.width()) :
-        pixel_width;
 
     for ( ; ; ) {
+        const char *julia_mode_name = "unknown";
+        switch (julia_mode) {
+        case MJ_JULIA_MODE_MANDELBROT:
+            julia_mode_name = is_locked ? "mandelbrot (locked)" : "mandelbrot (unlocked)";
+            break;
+        case MJ_JULIA_MODE_JULIA_AT_C:
+            julia_mode_name = "julia at c";
+            break;
+        case MJ_JULIA_MODE_JULIA_AT_0:
+            julia_mode_name = "julia at 0";
+            break;
+        case MJ_JULIA_MODE_MANDELBROT_JULIA:
+            julia_mode_name = "mandelbrot julia";
+            break;
+        }
+
         SDL_FillRect(surface, 0, 0);
         SDL_UpdateWindowSurface(window);
         fprintf(stderr, "===============================================\n");
         mj_render(csurface, color, cx, cy, pixel_width, antialias_threshold,
-                  color_period, max_iter, is_julia);
-        fprintf(stderr, "type = %s\n", is_julia ? "julia" : "mandelbrot");
+                  color_period, max_iter, julia_mode);
+        fprintf(stderr, "type = %s\n", julia_mode_name);
         fprintf(stderr, "x    = "); mj_printval(stderr, cx); fprintf(stderr, "\n");
         fprintf(stderr, "y    = "); mj_printval(stderr, cy); fprintf(stderr, "\n");
         fprintf(stderr, "w    = %d\n", csurface.width());
@@ -185,8 +200,20 @@ static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette con
                 case SDLK_h:
                     mul = -6.0;
                     break;
+                case SDLK_m:
+                    mul = MJ_JULIA_MODE_MANDELBROT - 100.0;
+                    break;
                 case SDLK_j:
-                    mul = -7.0;
+                    mul = MJ_JULIA_MODE_JULIA_AT_0 - 100.0;
+                    break;
+                case SDLK_k:
+                    mul = MJ_JULIA_MODE_JULIA_AT_C - 100.0;
+                    break;
+                case SDLK_n:
+                    mul = MJ_JULIA_MODE_MANDELBROT_JULIA - 100.0;
+                    break;
+                case SDLK_l:
+                    mul = -1000.0;
                     break;
                 case SDLK_ESCAPE:
                     SDL_Quit();
@@ -197,7 +224,7 @@ static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette con
                     event_processed = 1;
 
                 if (mul > 0.0) {
-                    if (!is_julia && mul <= 1.0) {
+                    if (julia_mode == MJ_JULIA_MODE_MANDELBROT && mul <= 1.0 && !is_locked) {
                         int mx, my;
                         SDL_GetMouseState(&mx, &my);
                         mx = mx - csurface.width()/2;
@@ -226,15 +253,19 @@ static void mj_preview(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette con
                 if (mul == -6.0)
                     antialias_threshold = (antialias_threshold < 0.125) ? 0.06125 : 0.5*antialias_threshold;
 
-                if (mul == -7.0) {
-                    if (!is_julia) {
-                        old_pixel_width = pixel_width;
-                        pixel_width = pow(pixel_width * 0.25 * csurface.width(), 1.0 / MJ_MANDELBROT_POWER) / (0.25 * csurface.width());
-                    } else {
-                        pixel_width = old_pixel_width;
-                    }
+                if (mul == -1000.0)
+                    is_locked = !is_locked;
 
-                    is_julia = !is_julia;
+                if (mul == MJ_JULIA_MODE_MANDELBROT - 100.0 || mul == MJ_JULIA_MODE_JULIA_AT_0 - 100.0 ||
+                    mul == MJ_JULIA_MODE_JULIA_AT_C - 100.0 || mul == MJ_JULIA_MODE_MANDELBROT_JULIA - 100.0) {
+                    int new_mode = int(mul + 100.0);
+                    if ((new_mode == MJ_JULIA_MODE_MANDELBROT || new_mode == MJ_JULIA_MODE_JULIA_AT_C) &&
+                        (julia_mode == MJ_JULIA_MODE_JULIA_AT_0 || julia_mode == MJ_JULIA_MODE_MANDELBROT_JULIA))
+                        pixel_width = pow(pixel_width * 0.25 * csurface.width(), MJ_MANDELBROT_POWER) / (0.25 * csurface.width());
+                    if ((julia_mode == MJ_JULIA_MODE_MANDELBROT || julia_mode == MJ_JULIA_MODE_JULIA_AT_C) &&
+                        (new_mode == MJ_JULIA_MODE_JULIA_AT_0 || new_mode == MJ_JULIA_MODE_MANDELBROT_JULIA))
+                        pixel_width = pow(pixel_width * 0.25 * csurface.width(), 1.0/MJ_MANDELBROT_POWER) / (0.25 * csurface.width());
+                    julia_mode = new_mode;
                 }
             }
         }
@@ -258,10 +289,11 @@ static void print_help()
     "  -p color period\n"
     "  -t antialias threshold\n"
     "  -m global multisample antialias\n"
-    "  -r radius of julia set (also switch to render julia set)\n"
-    "  -a angle of julia set (also switch to render julia set)\n"
+    "  -r radius of julia set (also switch to render julia-at-0)\n"
+    "  -a angle of julia set (also switch to render julia-at-0)\n"
     "  -q computation bits (64, 80)\n"
-    "  -b png bits (8, 16)\n");
+    "  -b png bits (8, 16)\n"
+    "  -j julia mode (julia-at-c, julia-at-0, mandelbrot-julia)\n");
 }
 
 int main(int argc, char **argv)
@@ -276,7 +308,7 @@ int main(int argc, char **argv)
         double radius = 0.0;
         double angle = 0.0;
         double antialias_threshold = 3.0;
-        int is_julia = 0;
+        int julia_mode = MJ_JULIA_MODE_MANDELBROT;
         int computation_bits = 64;
         int png_bits = 8;
         int multisample = 1;
@@ -317,11 +349,13 @@ int main(int argc, char **argv)
                 break;
             case 'r':
                 radius = mj_parseval<double>(argv[k+1], -10000.0, 10000.0);
-                is_julia = 1;
+                if (julia_mode == MJ_JULIA_MODE_MANDELBROT)
+                    julia_mode = MJ_JULIA_MODE_JULIA_AT_C;
                 break;
             case 'a':
                 angle = mj_parseval<double>(argv[k+1], -10000.0, 10000.0);
-                is_julia =  1;
+                if (julia_mode == MJ_JULIA_MODE_MANDELBROT)
+                    julia_mode = MJ_JULIA_MODE_JULIA_AT_C;
                 break;
             case 'o':
                 filename = argv[k+1];
@@ -340,6 +374,20 @@ int main(int argc, char **argv)
                 break;
             case 'C':
                 color_offset = mj_parseval<double>(argv[k+1], 0.0, 1.0);
+                break;
+            case 'j': {
+                    const char *str_list[] = {
+                        "julia-at-c",
+                        "julia-at-0",
+                        "mandelbrot-julia"
+                    };
+                    int list[] = {
+                        MJ_JULIA_MODE_JULIA_AT_C,
+                        MJ_JULIA_MODE_JULIA_AT_0,
+                        MJ_JULIA_MODE_MANDELBROT_JULIA
+                    };
+                    julia_mode = mj_parseval<int>(argv[k+1], str_list, list, 3);
+                }
                 break;
             default:
                 throw "invalid argument";
@@ -364,17 +412,17 @@ int main(int argc, char **argv)
             case 64:
                 mj_preview(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
                            mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                           antialias_threshold, color_period, max_iter, is_julia);
+                           antialias_threshold, color_period, max_iter, julia_mode);
                 break;
             case 80:
                 mj_preview(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
                            mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                           antialias_threshold, color_period, max_iter, is_julia);
+                           antialias_threshold, color_period, max_iter, julia_mode);
                 break;
             case 128:
                 mj_preview(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
                            mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
-                           antialias_threshold, color_period, max_iter, is_julia);
+                           antialias_threshold, color_period, max_iter, julia_mode);
                 break;
             default:
                 throw "unreached";
@@ -389,17 +437,17 @@ int main(int argc, char **argv)
         case 64:
             mj_render(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
                       mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                      antialias_threshold, color_period, max_iter, is_julia);
+                      antialias_threshold, color_period, max_iter, julia_mode);
             break;
         case 80:
             mj_render(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
                       mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                      antialias_threshold, color_period, max_iter, is_julia);
+                      antialias_threshold, color_period, max_iter, julia_mode);
             break;
         case 128:
             mj_render(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
                       mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
-                      antialias_threshold, color_period, max_iter, is_julia);
+                      antialias_threshold, color_period, max_iter, julia_mode);
             break;
         default:
             throw "unreached";

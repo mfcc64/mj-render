@@ -65,6 +65,15 @@ T mj_parseval(const char *str, const T* list, int n_list)
 }
 
 template<typename T>
+T mj_parseval(const char *str, const char **str_list, const T *list, int n_list)
+{
+    for (int n = 0; n < n_list; n++)
+        if (!strcmp(str, str_list[n]))
+            return list[n];
+    throw "invalid value mj_parseval";
+}
+
+template<typename T>
 void mj_printval(FILE *fp, T v)
 {
     const char *fmt = NULL;
