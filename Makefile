@@ -14,25 +14,25 @@ clean:
 	rm -frv $(PROGS)
 
 mj-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=2 mj-render.cc -o mj-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=2 mj-render.cc -o mj-render $(LDFLAGS)
 
 mj3-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=3 mj-render.cc -o mj3-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=3 mj-render.cc -o mj3-render $(LDFLAGS)
 
 mj4-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=4 mj-render.cc -o mj4-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=4 mj-render.cc -o mj4-render $(LDFLAGS)
 
 mj5-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=5 mj-render.cc -o mj5-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=5 mj-render.cc -o mj5-render $(LDFLAGS)
 
 mj6-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=6 mj-render.cc -o mj6-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=6 mj-render.cc -o mj6-render $(LDFLAGS)
 
 mj7-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=7 mj-render.cc -o mj7-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=7 mj-render.cc -o mj7-render $(LDFLAGS)
 
 mj8-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=8 mj-render.cc -o mj8-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=8 mj-render.cc -o mj8-render $(LDFLAGS)
 
 mj9-render: mj-render.cc $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -DMJ_MANDELBROT_POWER=9 mj-render.cc -o mj9-render
+	$(CXX) $(CXXFLAGS) -DMJ_MANDELBROT_POWER=9 mj-render.cc -o mj9-render $(LDFLAGS)
