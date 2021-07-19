@@ -407,22 +407,21 @@ int main(int argc, char **argv)
         MJ_ColorPalette color(palette_filename, color_offset);
         MJ_Surface<MJ_Color> csurface(width, height);
 
+#define MJ_PREVIEW_SELECT(type)                                                 \
+    mj_preview(csurface, color, mj_parseval<type>(cx_str) + (type)jx,           \
+               mj_parseval<type>(cy_str) + (type)jy, width_view / width,        \
+               antialias_threshold, color_period, max_iter, julia_mode)
+
         if (is_preview) {
             switch (computation_bits) {
             case 64:
-                mj_preview(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
-                           mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                           antialias_threshold, color_period, max_iter, julia_mode);
+                MJ_PREVIEW_SELECT(double);
                 break;
             case 80:
-                mj_preview(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
-                           mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                           antialias_threshold, color_period, max_iter, julia_mode);
+                MJ_PREVIEW_SELECT(long double);
                 break;
             case 128:
-                mj_preview(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
-                           mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
-                           antialias_threshold, color_period, max_iter, julia_mode);
+                MJ_PREVIEW_SELECT(MJ_F128);
                 break;
             default:
                 throw "unreached";
@@ -433,21 +432,20 @@ int main(int argc, char **argv)
         double last_time, current_time;
         last_time = mj_gettimeofday();
 
+#define MJ_RENDER_SELECT(type)                                                  \
+    mj_render(csurface, color, mj_parseval<type>(cx_str) + (type)jx,            \
+              mj_parseval<type>(cy_str) + (type)jy, width_view / width,         \
+              antialias_threshold, color_period, max_iter, julia_mode)
+
         switch (computation_bits) {
         case 64:
-            mj_render(csurface, color, mj_parseval<double>(cx_str, -10000.0, 10000.0) + jx,
-                      mj_parseval<double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                      antialias_threshold, color_period, max_iter, julia_mode);
+            MJ_RENDER_SELECT(double);
             break;
         case 80:
-            mj_render(csurface, color, mj_parseval<long double>(cx_str, -10000.0, 10000.0) + jx,
-                      mj_parseval<long double>(cy_str, -10000.0, 10000.0) + jy, width_view / width,
-                      antialias_threshold, color_period, max_iter, julia_mode);
+            MJ_RENDER_SELECT(long double);
             break;
         case 128:
-            mj_render(csurface, color, mj_parseval<MJ_F128>(cx_str) + MJ_F128(jx),
-                      mj_parseval<MJ_F128>(cy_str) + MJ_F128(jy), width_view / width,
-                      antialias_threshold, color_period, max_iter, julia_mode);
+            MJ_RENDER_SELECT(MJ_F128);
             break;
         default:
             throw "unreached";
