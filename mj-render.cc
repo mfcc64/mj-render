@@ -350,12 +350,12 @@ int main(int argc, char **argv)
             case 'r':
                 radius = mj_parseval<double>(argv[k+1], -10000.0, 10000.0);
                 if (julia_mode == MJ_JULIA_MODE_MANDELBROT)
-                    julia_mode = MJ_JULIA_MODE_JULIA_AT_C;
+                    julia_mode = MJ_JULIA_MODE_JULIA_AT_0;
                 break;
             case 'a':
                 angle = mj_parseval<double>(argv[k+1], -10000.0, 10000.0);
                 if (julia_mode == MJ_JULIA_MODE_MANDELBROT)
-                    julia_mode = MJ_JULIA_MODE_JULIA_AT_C;
+                    julia_mode = MJ_JULIA_MODE_JULIA_AT_0;
                 break;
             case 'o':
                 filename = argv[k+1];
