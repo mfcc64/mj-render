@@ -292,7 +292,7 @@ static void print_help()
     "  -m global multisample antialias\n"
     "  -r radius of julia set (also switch to render julia-at-0)\n"
     "  -a angle of julia set (also switch to render julia-at-0)\n"
-    "  -q computation bits (64, 80)\n"
+    "  -q computation bits (64, 80, 128, 256, 384, 512, 768, 1024)\n"
     "  -b png bits (8, 16)\n"
     "  -j julia mode (julia-at-c, julia-at-0, mandelbrot-julia)\n");
 }
