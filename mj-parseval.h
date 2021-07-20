@@ -22,7 +22,7 @@
 #include <typeinfo>
 
 template<typename T>
-T mj_parseval(const char *str)
+T mj_parseval(const char *str, T dummy)
 {
     T v;
     char tail;
@@ -43,6 +43,12 @@ T mj_parseval(const char *str)
         throw "invalid mj_parseval";
 
     return v;
+}
+
+template<typename T>
+T mj_parseval(const char *str)
+{
+    return mj_parseval(str, T(0));
 }
 
 template<typename T>

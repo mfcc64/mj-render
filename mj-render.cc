@@ -27,6 +27,7 @@
 #include "mj-parseval.h"
 #include "mj-color.h"
 #include "mj-f128.h"
+#include "mj-fixed.h"
 #include "mj-png.h"
 
 inline double mj_gettimeofday()
@@ -361,7 +362,7 @@ int main(int argc, char **argv)
                 filename = argv[k+1];
                 break;
             case 'q':
-                computation_bits = mj_parseval<int>(argv[k+1], (const int[]){64, 80, 128}, 3);
+                computation_bits = mj_parseval<int>(argv[k+1], (const int[]){64, 80, 128, 256, 384, 512, 768, 1024}, 8);
                 break;
             case 'b':
                 png_bits = mj_parseval<int>(argv[k+1], (const int[]){8, 16}, 2);
@@ -408,8 +409,8 @@ int main(int argc, char **argv)
         MJ_Surface<MJ_Color> csurface(width, height);
 
 #define MJ_PREVIEW_SELECT(type)                                                 \
-    mj_preview(csurface, color, mj_parseval<type>(cx_str) + (type)jx,           \
-               mj_parseval<type>(cy_str) + (type)jy, width_view / width,        \
+    mj_preview(csurface, color, mj_parseval(cx_str, (type)0) + (type)jx,        \
+               mj_parseval(cy_str, (type)0) + (type)jy, width_view / width,     \
                antialias_threshold, color_period, max_iter, julia_mode)
 
         if (is_preview) {
@@ -423,6 +424,21 @@ int main(int argc, char **argv)
             case 128:
                 MJ_PREVIEW_SELECT(MJ_F128);
                 break;
+            case 256:
+                MJ_PREVIEW_SELECT(MJ_Fixed<256>);
+                break;
+            case 384:
+                MJ_PREVIEW_SELECT(MJ_Fixed<384>);
+                break;
+            case 512:
+                MJ_PREVIEW_SELECT(MJ_Fixed<512>);
+                break;
+            case 768:
+                MJ_PREVIEW_SELECT(MJ_Fixed<768>);
+                break;
+            case 1024:
+                MJ_PREVIEW_SELECT(MJ_Fixed<1024>);
+                break;
             default:
                 throw "unreached";
             }
@@ -433,8 +449,8 @@ int main(int argc, char **argv)
         last_time = mj_gettimeofday();
 
 #define MJ_RENDER_SELECT(type)                                                  \
-    mj_render(csurface, color, mj_parseval<type>(cx_str) + (type)jx,            \
-              mj_parseval<type>(cy_str) + (type)jy, width_view / width,         \
+    mj_render(csurface, color, mj_parseval(cx_str, (type)0) + (type)jx,         \
+              mj_parseval(cy_str, (type)0) + (type)jy, width_view / width,      \
               antialias_threshold, color_period, max_iter, julia_mode)
 
         switch (computation_bits) {
@@ -446,6 +462,21 @@ int main(int argc, char **argv)
             break;
         case 128:
             MJ_RENDER_SELECT(MJ_F128);
+            break;
+        case 256:
+            MJ_RENDER_SELECT(MJ_Fixed<256>);
+            break;
+        case 384:
+            MJ_RENDER_SELECT(MJ_Fixed<384>);
+            break;
+        case 512:
+            MJ_RENDER_SELECT(MJ_Fixed<512>);
+            break;
+        case 768:
+            MJ_RENDER_SELECT(MJ_Fixed<768>);
+            break;
+        case 1024:
+            MJ_RENDER_SELECT(MJ_Fixed<1024>);
             break;
         default:
             throw "unreached";

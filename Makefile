@@ -3,7 +3,7 @@ CXX=g++
 CXXFLAGS=-O2 -fno-math-errno
 LDFLAGS=-lpng -lSDL2 -lgmp
 HEADERS=mj-calc.h mj-adaptive-render.h mj-antialias.h mj-color.h mj-f128.h \
-	mj-parseval.h mj-png.h mj-surface.h
+	mj-parseval.h mj-png.h mj-surface.h mj-fixed.h
 PROGS=mj-render mj3-render mj4-render mj5-render mj6-render mj7-render \
 	mj8-render mj9-render
 

@@ -282,8 +282,7 @@ inline bool operator >=(const MJ_F128& a, double b)
     return int64_t(a.m_value[1]) >= int64_t(b * (1LL << 56));
 }
 
-template<>
-inline MJ_F128 mj_parseval<MJ_F128>(const char *str)
+inline MJ_F128 mj_parseval(const char *str, MJ_F128 dummy)
 {
     return str;
 }
