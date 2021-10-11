@@ -43,8 +43,9 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
 {
     int is_sym = (julia_mode == MJ_JULIA_MODE_JULIA_AT_0 || julia_mode == MJ_JULIA_MODE_MANDELBROT_JULIA);
     is_sym = is_sym && (MJ_MANDELBROT_POWER % 2 == 0);
+    int is_mirror = (cy == T(0));
     MJ_Surface<double> dsurface(csurface.width() + 2,
-                                is_sym ? (csurface.height() + 1) / 2 + 2 :
+                                (is_sym || is_mirror) ? (csurface.height() + 1) / 2 + 2 :
                                 csurface.height()+ 2);
     double center_x = 0.5 * (csurface.width() - 1) + 1;
     double center_y = 0.5 * (csurface.height() - 1) + 1;
@@ -75,10 +76,10 @@ static void mj_render(MJ_Surface<MJ_Color> const& csurface, MJ_ColorPalette cons
             break;
     }
 
-    if (is_sym) {
+    if (is_sym || is_mirror) {
         for (int y0 = 0, y1 = csurface.height() - 1; y0 < y1; y0++, y1--)
             for (int x = 0; x < csurface.width(); x++)
-                csurface(x, y1) = csurface(csurface.width() - 1 - x, y0);
+                csurface(x, y1) = csurface(is_sym ? (csurface.width() - 1 - x) : x, y0);
     }
 }
 

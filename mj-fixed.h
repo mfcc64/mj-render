@@ -129,6 +129,7 @@ public:
     template<int BITS2> friend MJ_Fixed<BITS2> operator -(const MJ_Fixed<BITS2> &a);
     template<int BITS2> friend MJ_Fixed<BITS2> operator *(const MJ_Fixed<BITS2> &a, const MJ_Fixed<BITS2> &b);
     template<int BITS2> friend MJ_Fixed<BITS2> mj_sqr(const MJ_Fixed<BITS2> &a);
+    template<int BITS2> friend bool operator ==(const MJ_Fixed<BITS2> &a, const MJ_Fixed<BITS2> &b);
     template<int BITS2> friend bool operator >=(const MJ_Fixed<BITS2> &a, double b);
 
 private:
@@ -224,6 +225,15 @@ inline MJ_Fixed<BITS> mj_sqr(const MJ_Fixed<BITS> &a)
     }
 
     return r;
+}
+
+template<int BITS>
+inline bool operator ==(const MJ_Fixed<BITS> &a, const MJ_Fixed<BITS> &b)
+{
+    for (int k = 0; k < MJ_Fixed<BITS>::LIMBS; k++)
+        if (a.m_value[k] != b.m_value[k])
+            return false;
+    return true;
 }
 
 template<int BITS>
