@@ -86,7 +86,7 @@ template<typename T>
 double mj_calc(T cx, T cy, T zx, T zy, int max_iter)
 {
     T fsq, sx, sy;
-    static const double fsq_max = 1.001 * pow(2.0, 2.0 / (MJ_MANDELBROT_POWER - 1));
+    static const T fsq_max = 1.001 * pow(2.0, 2.0 / (MJ_MANDELBROT_POWER - 1));
 
     for (int k = 0; k < max_iter; k++) {
         MJ_COMPLEX_POW(sx, sy, zx, zy, &fsq, MJ_MANDELBROT_POWER);

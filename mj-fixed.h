@@ -130,7 +130,7 @@ public:
     template<int BITS2> friend MJ_Fixed<BITS2> operator *(const MJ_Fixed<BITS2> &a, const MJ_Fixed<BITS2> &b);
     template<int BITS2> friend MJ_Fixed<BITS2> mj_sqr(const MJ_Fixed<BITS2> &a);
     template<int BITS2> friend bool operator ==(const MJ_Fixed<BITS2> &a, const MJ_Fixed<BITS2> &b);
-    template<int BITS2> friend bool operator >=(const MJ_Fixed<BITS2> &a, double b);
+    template<int BITS2> friend bool operator >=(const MJ_Fixed<BITS2> &a, const MJ_Fixed<BITS2> &b);
 
 private:
     static const int BYTES = BITS / 8;
@@ -237,9 +237,22 @@ inline bool operator ==(const MJ_Fixed<BITS> &a, const MJ_Fixed<BITS> &b)
 }
 
 template<int BITS>
-inline bool operator >=(const MJ_Fixed<BITS> &a, double b)
+inline bool operator >=(const MJ_Fixed<BITS> &a, const MJ_Fixed<BITS> &b)
 {
-    return double(a) >= b;
+    const int LIMBS = MJ_Fixed<BITS>::LIMBS;
+    if (int64_t(a.m_value[LIMBS - 1]) < int64_t(b.m_value[LIMBS - 1]))
+        return false;
+    if (int64_t(a.m_value[LIMBS - 1]) > int64_t(b.m_value[LIMBS - 1]))
+        return true;
+
+    for (int k = LIMBS - 2; k > 0; k--) {
+        if (a.m_value[k] < b.m_value[k])
+            return false;
+        if (a.m_value[k] > b.m_value[k])
+            return true;
+    }
+
+    return a.m_value[0] >= b.m_value[0];
 }
 
 template<int BITS>
